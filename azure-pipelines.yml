@@ -1,13 +1,36 @@
 trigger:
 - '*'
 
+pool:
+  vmImage: 'ubuntu-20.04'
+  demands:
+  - npm
 
+variables:
+  buildConfiguration: 'Release'
+  wwwrootDir: 'Tailspin.SpaceGame.Web/wwwroot'
+  dotnetSdkVersion: '6.x'
 
+steps:
+- task: UseDotNet@2
+  displayName: 'Use .NET SDK $(dotnetSdkVersion)'
+  inputs:
+    version: '$(dotnetSdkVersion)'
 
+- task: Npm@1
+  displayName: 'Run npm install'
+  inputs:
+    verbose: false
 
+- script: './node_modules/.bin/node-sass $(wwwrootDir) --output $(wwwrootDir)'
+  displayName: 'Compile Sass assets'
 
+- task: gulp@1
+  displayName: 'Run gulp tasks'
 
-
+- script: 'echo "$(Build.DefinitionName), $(Build.BuildId), $(Build.BuildNumber)" > buildinfo.txt'
+  displayName: 'Write build info'
+  workingDirectory: $(wwwrootDir)
 
 
 
@@ -18,3 +41,4 @@ trigger:
     arguments: '--no-build --configuration $(buildConfiguration)'
     publishTestResults: true
     projects: '**/*.Tests.csproj'
+
